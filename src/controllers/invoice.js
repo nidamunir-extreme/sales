@@ -1,21 +1,42 @@
+const mongoose = require("mongoose");
 const Invoice = require("../models/invoice");
 const User = require("../models/user");
 const Product = require("../models/product");
 
 exports.createInvoice = async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
-    const user = await User.findById(userId);
-    const product = await Product.findById(productId);
-    if (!user || !product)
-      return res.status(404).send("User or Product not found");
-    const total = product.price * quantity;
+    const { user, productIds, reference, total } = req.body;
+
+    if (
+      !user ||
+      !Array.isArray(productIds) ||
+      productIds.length === 0 ||
+      !reference ||
+      total == null
+    ) {
+      return res.status(400).json({ message: "Missing required fields." });
+    }
+
+    // Validate user exists
+    const existingUser = await User.findById(user);
+    if (!existingUser) {
+      return res.status(400).json({ message: "Invalid user ID." });
+    }
+
+    // Validate all product IDs
+    const products = await Product.find({ _id: { $in: productIds } });
+    if (products.length !== productIds.length) {
+      return res.status(400).json({ message: "Some product IDs are invalid." });
+    }
+
+    // Create invoice
     const invoice = new Invoice({
-      user: userId,
-      product: productId,
-      quantity,
+      user,
+      product: productIds,
       total,
+      reference,
     });
+
     await invoice.save();
     res.status(201).json(invoice);
   } catch (error) {
@@ -56,10 +77,15 @@ exports.getInvoicesById = async (req, res) => {
   }
 
   try {
-    const invoices = await Invoice.find()
+    const invoice = await Invoice.findById(id)
       .populate("user", "name email")
       .populate("product", "name price");
-    res.status(200).json(invoices);
+
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    res.json(invoice);
   } catch (err) {
     console.error("Error retrieving invoice:", err);
     res.status(500).json({ error: "Failed to retrieve invoice" });
