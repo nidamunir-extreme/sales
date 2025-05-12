@@ -1,11 +1,11 @@
-const Role = require('../models/role');
-const User = require('../models/user');
+const Role = require("../models/role");
+const User = require("../models/user");
 
 // Get all roles with associated users
 exports.getAllRoles = async (req, res) => {
   try {
     const roles = await Role.find();
- 
+
     res.json(roles);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -30,7 +30,7 @@ exports.getRoleById = async (req, res) => {
   try {
     const role = await Role.findById(req.params.id);
     if (!role) {
-      return res.status(404).json({ message: 'Role not found' });
+      return res.status(404).json({ message: "Role not found" });
     }
     res.json({ role });
   } catch (err) {
@@ -48,7 +48,7 @@ exports.updateRole = async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!updatedRole) {
-      return res.status(404).json({ message: 'Role not found' });
+      return res.status(404).json({ message: "Role not found" });
     }
     res.json(updatedRole);
   } catch (err) {
@@ -61,9 +61,9 @@ exports.deleteRole = async (req, res) => {
   try {
     const deletedRole = await Role.findByIdAndDelete(req.params.id);
     if (!deletedRole) {
-      return res.status(404).json({ message: 'Role not found' });
+      return res.status(404).json({ message: "Role not found" });
     }
-    res.json({ message: 'Deleted Role' });
+    res.json({ message: "Deleted Role" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

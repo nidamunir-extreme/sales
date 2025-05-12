@@ -1,4 +1,5 @@
-const User = require('../models/user');
+const User = require("../models/user");
+const bcrypt = require("bcrypt");
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
@@ -15,6 +16,13 @@ exports.createUser = async (req, res) => {
   const { name, email, role } = req.body;
   const user = new User({ name, email, role });
 
+  const saltRounds = 8;
+
+  try {
+    user.password = await bcrypt.hash(req.body.password, saltRounds);
+  } catch (err) {
+    return res.status(500).json({ message: "Error securing password" });
+  }
   try {
     const newUser = await user.save();
     res.status(201).json(newUser);
@@ -28,7 +36,7 @@ exports.getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
     res.json(user);
   } catch (err) {
@@ -46,7 +54,7 @@ exports.updateUser = async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
     res.json(updatedUser);
   } catch (err) {
@@ -59,9 +67,9 @@ exports.deleteUser = async (req, res) => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
     if (!deletedUser) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
-    res.json({ message: 'Deleted User' });
+    res.json({ message: "Deleted User" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
