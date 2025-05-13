@@ -21,6 +21,7 @@ app.use("/products", require("./routes/products"));
 app.use("/roles", require("./routes/roles"));
 app.use("/invoices", require("./routes/invoices"));
 app.use("/reports", require("./routes/report"));
+app.use("/login", require("./routes/authRoute"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -13,7 +13,7 @@ exports.getDailySalesReport = async (req, res, next) => {
 
 exports.downloadDailySalesReportPdf = async (req, res, next) => {
   try {
-    const pdfBuffer = await reportService.generateDailySalesReportPdf();
+    const pdfBuffer = await generateDailySalesReportPdf();
     res
       .status(200)
       .header("Content-Type", "application/pdf")
