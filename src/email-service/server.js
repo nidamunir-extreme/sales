@@ -89,4 +89,7 @@ const start = async () => {
   }
 };
 
-start();
+start().catch((err) => {
+  console.error("Email‐sender failed to start", err);
+  process.exit(1);
+});
