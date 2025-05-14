@@ -1,9 +1,6 @@
 const amqp = require("amqplib");
 
-// RabbitMQ connection URL
 const rabbitmqUrl = process.env.RABBITMQ_URL || "amqp://localhost";
-
-// Queue name for daily sales report
 const DAILY_SALES_REPORT_QUEUE = "daily_sales_report";
 
 /**
@@ -65,22 +62,22 @@ const consumeQueue = async (queueName, callback) => {
 
     console.log(`Waiting for messages from queue: ${queueName}`);
 
-    channel.consume(
-      queueName,
-      (msg) => {
-        if (msg !== null) {
-          const content = JSON.parse(msg.content.toString());
-          console.log(`Received message from queue: ${queueName}`);
+    channel.consume(queueName, async (msg) => {
+      if (msg !== null) {
+        try {
+          const contentStr = msg.content.toString();
+          console.log("Raw message content:", contentStr);
 
-          // Process the message
-          callback(content);
+          const content = JSON.parse(contentStr);
+          await callback(content);
 
-          // Acknowledge the message
           channel.ack(msg);
+        } catch (error) {
+          console.error("Error parsing message or executing callback:", error);
+          channel.nack(msg, false, false); // discard the message
         }
-      },
-      { noAck: false } // Manual acknowledgment
-    );
+      }
+    });
   } catch (error) {
     console.error("Error consuming queue:", error);
     throw error;

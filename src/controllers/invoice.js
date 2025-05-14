@@ -32,7 +32,7 @@ exports.createInvoice = async (req, res) => {
     // Create invoice
     const invoice = new Invoice({
       user,
-      product: productIds,
+      products: productIds,
       total,
       reference,
     });

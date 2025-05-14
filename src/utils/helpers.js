@@ -1,4 +1,3 @@
-// utils/helpers.js
 const crypto = require("crypto");
 
 /**
@@ -40,18 +39,15 @@ exports.getDayRange = (date = new Date()) => {
   return { start, end };
 };
 
-// utils/emailTemplates.js
-/**
- * Generate daily sales report email template
- */
 exports.generateDailySalesReportTemplate = (salesData) => {
-  const { totalSales, date, itemsSold } = salesData;
+  console.log("Here is the sales data:", salesData);
+
+  const { amount, date, itemsSold, generatedOn } = salesData;
 
   let itemsHtml = "";
   itemsSold.forEach((item) => {
     itemsHtml += `
       <tr>
-        <td style="padding: 10px; border: 1px solid #ddd;">${item.sku}</td>
         <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">${
           item.qty
         }</td>
@@ -80,17 +76,16 @@ exports.generateDailySalesReportTemplate = (salesData) => {
       <div class="container">
         <div class="header">
           <h2>Daily Sales Report</h2>
-          <p>Date: ${date}</p>
+          <p>Date: ${generatedOn}</p>
+          
         </div>
         <div class="content">
-          <p>Here is a summary of sales for ${date}:</p>
-          <h3>Total Sales: $${totalSales.toFixed(2)}</h3>
-          
+          <p>Here is a summary of sales for <strong>${date}</strong>:</p>
+          <h3>Total Sales: $${parseInt(amount).toFixed(2)}</h3>   
           <h3>Items Sold:</h3>
           <table>
             <thead>
               <tr>
-                <th>SKU</th>
                 <th>Quantity</th>
                 <th>Amount</th>
               </tr>

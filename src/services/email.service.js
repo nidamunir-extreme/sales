@@ -1,25 +1,24 @@
 require("dotenv").config();
 const { consumeQueue, DAILY_SALES_REPORT_QUEUE } = require("../config/rabitmq");
 const nodemailer = require("nodemailer");
-const { generateDailySalesReportTemplate } = require("../utils/helpers");
+const {
+  generateDailySalesReportTemplate,
+  formatDate,
+} = require("../utils/helpers");
 
-// Create a test (ethereal) or real nodemailer transporter
 const createTransporter = async () => {
   if (process.env.NODE_ENV === "development") {
-    const testAccount = await nodemailer.createTestAccount();
-
     return nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT),
+      secure: process.env.SMTP_SECURE === "true",
       auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
   }
 
-  // For production, use real SMTP
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT),
@@ -30,13 +29,10 @@ const createTransporter = async () => {
     },
   });
 };
-
 // Send email
 const sendEmail = async (options) => {
   const transporter = await createTransporter();
-
   const { to, subject, html } = options;
-
   const mailOptions = {
     from: process.env.EMAIL_FROM || "noreply@example.com",
     to,
@@ -48,22 +44,24 @@ const sendEmail = async (options) => {
 
   console.log("Email sent:", info.messageId);
 
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV === "development")
     console.log("Preview URL:", nodemailer.getTestMessageUrl(info));
-  }
-
   return info;
 };
 
 // Process daily sales report
 const processDailySalesReport = async (report) => {
   try {
-    console.log("Processing daily sales report:", report.date);
-    const html = generateDailySalesReportTemplate(report);
+    const today = new Date();
+    const html = generateDailySalesReportTemplate({
+      ...report,
+      date: formatDate(today),
+    });
+    console.log("Processing daily sales report html:", html);
 
     const emailOptions = {
-      to: report.recipientEmail,
-      subject: `Daily Sales Report - ${report.date}`,
+      to: "zohaibkhattak6@gmail.com",
+      subject: `Daily Sales Report`,
       html,
     };
 
@@ -77,11 +75,10 @@ const processDailySalesReport = async (report) => {
 // Start consuming messages from the queue
 const start = async () => {
   try {
-    await consumeQueue(DAILY_SALES_REPORT_QUEUE, async (msg) => {
-      const report = JSON.parse(msg.content.toString());
-      await processDailySalesReport(report);
-    });
-
+    await consumeQueue(
+      DAILY_SALES_REPORT_QUEUE,
+      async (report) => await processDailySalesReport(report)
+    );
     console.log(`Listening for messages on queue: ${DAILY_SALES_REPORT_QUEUE}`);
   } catch (err) {
     console.error("Failed to start email service:", err);
@@ -89,7 +86,4 @@ const start = async () => {
   }
 };
 
-start().catch((err) => {
-  console.error("Email‐sender failed to start", err);
-  process.exit(1);
-});
+module.exports = { start };

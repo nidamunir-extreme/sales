@@ -6,13 +6,6 @@ const adminMiddleware = require("../middlewares/admin");
 
 router.use(authMiddleware, adminMiddleware);
 
-// e.g. GET /reports/daily?date=2025-05-13
 router.get("/daily", reportController.getDailySalesReport);
-router.get(
-  "/daily/pdf",
-  authMiddleware,
-  adminMiddleware,
-  reportController.downloadDailySalesReportPdf
-);
 
 module.exports = router;

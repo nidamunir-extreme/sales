@@ -1,4 +1,3 @@
-// services/cronJobs.js
 const cron = require("node-cron");
 const Invoice = require("../models/invoice");
 const { getDayRange, formatDate } = require("../utils/helpers");
@@ -8,40 +7,48 @@ const { DAILY_SALES_REPORT_QUEUE, sendToQueue } = require("../config/rabitmq");
  * Generate daily sales report
  * Fetches all invoices for the current day, calculates total sales and items sold
  */
+let isJobRunning = false;
+
 const generateDailySalesReport = async () => {
+  if (isJobRunning) {
+    console.log(
+      "Daily sales report job is already running. Skipping new execution."
+    );
+    return;
+  }
+
+  isJobRunning = true;
+
   try {
-    const { start, end } = getDayRange();
+    console.log(`Generating sales report for all invoices`);
 
-    console.log(`Generating sales report for ${formatDate(start)}`);
+    const invoices = await Invoice.find({})
+      .populate("user", "name email")
+      .populate("product", "name price");
 
-    // Get all invoices for the current day
-    const invoices = await Invoice.find({
-      date: { $gte: start, $lte: end },
-    });
-
-    // Calculate total sales
     const totalSales = invoices.reduce(
-      (total, invoice) => total + invoice.amount,
+      (total, invoice) => total + invoice.total,
       0
     );
 
-    // Calculate items sold by SKU
     const itemsSoldMap = new Map();
 
     invoices.forEach((invoice) => {
-      invoice.items.forEach((item) => {
-        const { sku, qty, price } = item;
+      invoice.product.forEach((product) => {
+        const productId = product._id.toString();
+        const price = product.price;
+        const qty = invoice.quantity || 1;
 
-        if (itemsSoldMap.has(sku)) {
-          const existing = itemsSoldMap.get(sku);
-          itemsSoldMap.set(sku, {
-            sku,
+        if (itemsSoldMap.has(productId)) {
+          const existing = itemsSoldMap.get(productId);
+          itemsSoldMap.set(productId, {
+            product: product.name,
             qty: existing.qty + qty,
             amount: existing.amount + qty * price,
           });
         } else {
-          itemsSoldMap.set(sku, {
-            sku,
+          itemsSoldMap.set(productId, {
+            product: product.name,
             qty,
             amount: qty * price,
           });
@@ -49,33 +56,28 @@ const generateDailySalesReport = async () => {
       });
     });
 
-    // Convert map to array
     const itemsSold = Array.from(itemsSoldMap.values());
 
-    // Create report
     const report = {
-      date: formatDate(start),
-      totalSales,
+      generatedOn: new Date().toDateString(),
+      amount: totalSales,
       totalInvoices: invoices.length,
       itemsSold,
     };
 
     console.log("Daily sales report generated");
 
-    // Send report to RabbitMQ queue
     await sendToQueue(DAILY_SALES_REPORT_QUEUE, report);
 
     return report;
   } catch (error) {
-    console.error("Error generating daily sales report:", error);
+    console.error("Error generating sales report:", error);
     throw error;
+  } finally {
+    isJobRunning = false;
   }
 };
 
-/**
- * Schedule daily sales report job
- * Runs every day at 12:00 PM
- */
 const scheduleJobs = () => {
   // Schedule daily sales report job
   // Runs every day at 12:00 PM
@@ -91,7 +93,6 @@ const scheduleJobs = () => {
   console.log("Cron jobs scheduled");
 };
 
-// Export for manual testing
 module.exports = {
   scheduleJobs,
   generateDailySalesReport,
