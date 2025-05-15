@@ -1,4 +1,4 @@
-const Product = require('../models/product');
+const Product = require("../models/product");
 
 // Get all products
 exports.getAllProducts = async (req, res) => {
@@ -28,7 +28,7 @@ exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
     if (product == null) {
-      return res.status(404).json({ message: 'Cannot find product' });
+      return res.status(404).json({ message: "Cannot find product" });
     }
     res.json(product);
   } catch (err) {
@@ -46,7 +46,7 @@ exports.updateProduct = async (req, res) => {
       { new: true, runValidators: true }
     );
     if (updatedProduct == null) {
-      return res.status(404).json({ message: 'Cannot find product' });
+      return res.status(404).json({ message: "Cannot find product" });
     }
     res.json(updatedProduct);
   } catch (err) {
@@ -59,9 +59,9 @@ exports.deleteProduct = async (req, res) => {
   try {
     const deletedProduct = await Product.findByIdAndDelete(req.params.id);
     if (deletedProduct == null) {
-      return res.status(404).json({ message: 'Cannot find product' });
+      return res.status(404).json({ message: "Cannot find product" });
     }
-    res.json({ message: 'Deleted Product' });
+    res.json({ message: "Deleted Product" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
