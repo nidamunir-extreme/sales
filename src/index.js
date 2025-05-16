@@ -9,14 +9,9 @@ app.use(express.json());
 
 // Connect Mongo
 mongoose
-  .connect(
-    process.env.MONGO_URI
-    //   , {
-    //   useNewUrlParser: true,
-    //   useUnifiedTopology: true,
-    // }
-  )
-  .then(() => console.log("MongoDB Connected"));
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 app.use("/users", require("./routes/users"));
 app.use("/products", require("./routes/products"));
