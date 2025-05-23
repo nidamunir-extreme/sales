@@ -18,6 +18,28 @@ exports.createUser = async (req, res) => {
 
   const saltRounds = 8;
 
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res
+      .status(400)
+      .json({ message: "User with this email already exists" });
+  }
+  let currentUserRole = null;
+  if (req.user && req.user.id) {
+    const currentUser = await User.findById(req.user.id);
+    if (currentUser) {
+      currentUserRole = currentUser.role;
+    }
+  }
+
+  console.log("Current user role:", currentUserRole);
+
+  if (currentUserRole !== "admin") {
+    return res
+      .status(403)
+      .json({ message: "You do not have permission to create a user" });
+  }
+
   try {
     user.password = await bcrypt.hash(req.body.password, saltRounds);
   } catch (err) {
