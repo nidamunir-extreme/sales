@@ -20,19 +20,11 @@ router.post("/", async (req, res) => {
 
     console.log("User found:", user);
 
-    // Decrypt user password using bcrypt
-    // const saltRounds = 8;
-    // const decryptedPassword = await bcrypt.hash(user.password, saltRounds);
-    // console.log("Decrypted password:", decryptedPassword);
-
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("Password match:", isMatch);
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-
-    console.log();
 
     // Generate JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
